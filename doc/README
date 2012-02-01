@@ -1,6 +1,6 @@
 LWJake2 README
 LWJake2 Website: https://github.com/flibitijibibo/LWJake2
-==============
+=========================================================
 
 LWJake2 is a fork of Jake2, a port of the GPL'd Quake 2 engine from id Software
 to Java.
@@ -18,17 +18,17 @@ LWJGL Website - http://www.lwjgl.org/
 LWJake2 is still under development. Send bug reports and feedback to
 flibitijibibo@flibitijibibo.com.
 
-Currently LWJake2 supports Linux, Windows and Mac OSX. The LWJake2 dedicated
-server runs on every Java supported platform.
+Currently LWJake2 supports GNU/Linux, Windows and Mac OSX. The LWJake2
+dedicated server runs on every Java supported platform.
 
 System Requirements:
-- A computer from the last 5 or so years.
+- A computer from the last ~5 years.
 - The latest version of Java.
 
 Installation
 ============
 
-- Extract the archive that this is in (SO META).
+- Extract the archive that this is in.
 - Install Quake 2 data (see below).
 - Run your respective executable (LWJake2.sh, for example)
 - Play!
