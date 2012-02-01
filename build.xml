@@ -1,0 +1,175 @@
+<project default="all" name="Build LWJake2">
+
+	<!-- Delete the output directories -->
+	<target name="clean">
+		<delete dir="built"/>
+	</target>
+
+	<!-- Classpath list for javac compiling -->
+	<path id="libPath">
+		<pathelement location="lib/lwjgl.jar"/>
+		<pathelement location="lib/lwjgl_util.jar"/>
+	</path>
+
+	<!-- FindBugs task definition -->
+	<taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask">
+		<classpath>
+			<pathelement location="findbugs/findbugs-2.0.0/lib/findbugs.jar"/>
+		</classpath>
+	</taskdef>
+
+	<!-- Compile LWJake2 -->
+	<target name="compile" depends="clean">
+		<!-- Compile the source code with javac -->
+		<mkdir dir="built/javac"/>
+		<javac destdir="built/javac" debug="on" source="1.7" includeantruntime="false">
+			<src path="src"/>
+			<classpath refid="libPath"/>
+		</javac>
+
+		<!-- Build the LWJake2 jar -->
+		<mkdir dir="built/jar"/>
+		<jar destfile="built/jar/lwjake2.jar">
+			<manifest>
+				<attribute name="Main-Class" value="jake2.Jake2"/>
+				<attribute name="Class-Path" value=". lwjgl.jar lwjgl_util.jar"/>
+			</manifest>
+			<fileset dir="built/javac/"/>
+		</jar>
+
+		<!-- Run FindBugs on the current source -->
+		<findbugs
+			home="findbugs/findbugs-2.0.0/lib/"
+			output="html"
+			outputFile="built/bugs.html"
+			projectFile="findbugs/LWJake2.fbp"
+			excludeFilter="findbugs/LWJake2.fbf"
+		/>
+	</target>
+
+	<!-- Build GNU/Linux version of LWJake2 -->
+	<target name="linux" depends="compile">
+		<!-- Copy LWJake2 jar -->
+		<copy file="built/jar/lwjake2.jar" todir="built/Linux"/>
+
+		<!-- Copy libs -->
+		<copy todir="built/Linux">
+			<fileset dir="lib">
+				<include name="lwjgl.jar"/>
+				<include name="lwjgl_util.jar"/>
+			</fileset>
+		</copy>
+
+		<!-- Copy doc folder -->
+		<copy todir="built/Linux/doc">
+			<fileset dir="doc"/>
+		</copy>
+
+		<!-- Copy GNU/Linux executable file -->
+		<copy file="executables/LWJake2.sh" todir="built/Linux"/>
+
+		<!-- Copy GNU/Linux native libraries -->
+		<copy file="lib/lwjgl_native/liblwjgl.so" todir="built/Linux"/>
+		<copy file="lib/lwjgl_native/liblwjgl64.so" todir="built/Linux"/>
+		<copy file="lib/lwjgl_native/libopenal.so" todir="built/Linux"/>
+		<copy file="lib/lwjgl_native/libopenal64.so" todir="built/Linux"/>
+	</target>
+
+	<!-- Build OSX version of LWJake2 -->
+	<target name="osx" depends="compile">
+		<!-- Copy LWJake2 jar -->
+		<copy file="built/jar/lwjake2.jar" todir="built/OSX"/>
+
+		<!-- Copy libs -->
+		<copy todir="built/OSX">
+			<fileset dir="lib">
+				<include name="lwjgl.jar"/>
+				<include name="lwjgl_util.jar"/>
+			</fileset>
+		</copy>
+
+		<!-- Copy doc folder -->
+		<copy todir="built/OSX/doc">
+			<fileset dir="doc"/>
+		</copy>
+
+		<!-- Copy OSX executable file -->
+		<copy file="executables/LWJake2.sh" todir="built/OSX"/>
+
+		<!-- Copy OSX native libraries -->
+		<copy file="lib/lwjgl_native/liblwjgl.jnilib" todir="built/OSX"/>
+		<copy file="lib/lwjgl_native/openal.dylib" todir="built/OSX"/>
+	</target>
+
+	<!-- Build Windows version of LWJake2 -->
+	<target name="windows" depends="compile">
+		<!-- Copy LWJake2 jar -->
+		<copy file="built/jar/lwjake2.jar" todir="built/Windows"/>
+
+		<!-- Copy libs -->
+		<copy todir="built/Windows">
+			<fileset dir="lib">
+				<include name="lwjgl.jar"/>
+				<include name="lwjgl_util.jar"/>
+			</fileset>
+		</copy>
+
+		<!-- Copy doc folder -->
+		<copy todir="built/Windows/doc">
+			<fileset dir="doc"/>
+		</copy>
+
+		<!-- Copy Windows executable file -->
+		<copy file="executables/LWJake2.bat" todir="built/Windows"/>
+
+		<!-- Copy Windows native libraries -->
+		<copy file="lib/lwjgl_native/lwjgl.dll" todir="built/Windows"/>
+		<copy file="lib/lwjgl_native/lwjgl64.dll" todir="built/Windows"/>
+		<copy file="lib/lwjgl_native/OpenAL32.dll" todir="built/Windows"/>
+		<copy file="lib/lwjgl_native/OpenAL64.dll" todir="built/Windows"/>
+	</target>
+	
+	<!-- Build the server version of LWJake2 -->
+	<target name="server" depends="compile">
+		<!--Copy LWJake2 jar -->
+		<copy file="built/jar/lwjake2.jar" todir="built/Server"/>
+		
+		<!-- Copy doc folder -->
+		<copy todir="built/Server/doc">
+			<fileset dir="doc"/>
+		</copy>
+		
+		<!-- Copy executable files -->
+		<copy file="executables/LWJake2_Server.sh" todir="built/Server"/>
+		<copy file="executables/LWJake2_Server.bat" todir="built/Server"/>
+	</target>
+
+	<!-- Build the source distribution -->
+	<target name="srcdist" depends="clean">
+		<mkdir dir="built/srcdist"/>
+		<tar destfile="built/srcdist/LWJake2-src.tar.gz" compression="gzip">
+			<tarfileset dir="executables" prefix="LWJake2/executables"/>
+			<tarfileset dir="findbugs" prefix="LWJake2/findbugs"/>
+			<tarfileset dir="lib" prefix="LWJake2/lib"/>
+			<tarfileset dir="doc" prefix="LWJake2/doc"/>
+			<tarfileset dir="src" prefix="LWJake2/src"/>
+			<tarfileset dir="." prefix="LWJake2">
+				<include name="build.xml"/>
+			</tarfileset>
+		</tar>
+		<zip destfile="built/srcdist/LWJake2-src.zip">
+			<zipfileset dir="." prefix="LWJake2">
+				<include name="executables/**"/>
+				<include name="findbugs/**"/>
+				<include name="lib/**"/>				
+				<include name="doc/*.*"/>
+				<include name="src/**"/>
+				<include name="build.xml"/>
+			</zipfileset>
+		</zip>
+	</target>
+
+	<target name="all" depends="linux,osx,windows,server,srcdist">
+	</target>
+
+</project>
