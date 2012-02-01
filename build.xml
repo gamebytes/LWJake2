@@ -31,7 +31,7 @@
 		<mkdir dir="built/jar"/>
 		<jar destfile="built/jar/lwjake2.jar">
 			<manifest>
-				<attribute name="Main-Class" value="jake2.Jake2"/>
+				<attribute name="Main-Class" value="lwjake2.LWJake2"/>
 				<attribute name="Class-Path" value=". lwjgl.jar lwjgl_util.jar"/>
 			</manifest>
 			<fileset dir="built/javac/"/>
