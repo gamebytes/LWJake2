@@ -9,6 +9,7 @@
 	<path id="libPath">
 		<pathelement location="lib/lwjgl.jar"/>
 		<pathelement location="lib/lwjgl_util.jar"/>
+		<pathelement location="lib/flibitEFX.jar"/>
 	</path>
 
 	<!-- FindBugs task definition -->
@@ -32,7 +33,7 @@
 		<jar destfile="built/jar/lwjake2.jar">
 			<manifest>
 				<attribute name="Main-Class" value="lwjake2.LWJake2"/>
-				<attribute name="Class-Path" value=". lwjgl.jar lwjgl_util.jar"/>
+				<attribute name="Class-Path" value=". lwjgl.jar lwjgl_util.jar flibitEFX.jar"/>
 			</manifest>
 			<fileset dir="built/javac/"/>
 		</jar>
@@ -57,6 +58,7 @@
 			<fileset dir="lib">
 				<include name="lwjgl.jar"/>
 				<include name="lwjgl_util.jar"/>
+				<include name="flibitEFX.jar"/>
 			</fileset>
 		</copy>
 
@@ -85,6 +87,7 @@
 			<fileset dir="lib">
 				<include name="lwjgl.jar"/>
 				<include name="lwjgl_util.jar"/>
+				<include name="flibitEFX.jar"/>
 			</fileset>
 		</copy>
 
@@ -111,6 +114,7 @@
 			<fileset dir="lib">
 				<include name="lwjgl.jar"/>
 				<include name="lwjgl_util.jar"/>
+				<include name="flibitEFX.jar"/>
 			</fileset>
 		</copy>
 
