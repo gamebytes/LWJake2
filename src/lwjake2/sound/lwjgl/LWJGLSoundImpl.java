@@ -42,7 +42,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
-import com.flibitijibibo.flibitEFX.EFXUnderwater;
+import com.flibitijibibo.flibitEFX.EFXEffectUnderwater;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL10;
@@ -68,7 +68,7 @@ public final class LWJGLSoundImpl implements Sound {
 
     /** EFX Variables */
     private int currentEffectIndex;
-    private EFXUnderwater underwaterEffect;
+    private EFXEffectUnderwater underwaterEffect;
     
 	// singleton 
 	private LWJGLSoundImpl() {
@@ -153,7 +153,7 @@ public final class LWJGLSoundImpl implements Sound {
 	private void initOpenALExtensions() 
 	{
 		Com.Printf("... using EFX effects:\n");
-		underwaterEffect = new EFXUnderwater();
+		underwaterEffect = new EFXEffectUnderwater();
 	}
 	
 	
