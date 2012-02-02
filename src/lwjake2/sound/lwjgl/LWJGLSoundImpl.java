@@ -21,6 +21,7 @@ package lwjake2.sound.lwjgl;
 import lwjake2.Defines;
 import lwjake2.Globals;
 import lwjake2.game.Cmd;
+import lwjake2.game.GameBase;
 import lwjake2.game.cvar_t;
 import lwjake2.game.entity_state_t;
 import lwjake2.qcommon.Com;
@@ -41,17 +42,13 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
+import com.flibitijibibo.flibitEFX.EFXUnderwater;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL10;
 import org.lwjgl.openal.ALC10;
+import org.lwjgl.openal.EFX10;
 import org.lwjgl.openal.OpenALException;
-/*
-Old EAX Code. If possible, replace with EFX10 - flibit
-import org.lwjgl.openal.eax.EAX;
-import org.lwjgl.openal.eax.EAX20;
-import org.lwjgl.openal.eax.EAXListenerProperties;
-*/
 
 /**
  * LWJGLSoundImpl
@@ -63,15 +60,16 @@ public final class LWJGLSoundImpl implements Sound {
 	static {
 		S.register(new LWJGLSoundImpl());
 	};
-
-	// Replace with an EFX equivalent - flibit
-	// private boolean hasEAX;
 	
 	private cvar_t s_volume;
 	
 	// the last 4 buffers are used for cinematics streaming
     private IntBuffer buffers = Lib.newIntBuffer(MAX_SFX + STREAM_QUEUE);
 
+    /** EFX Variables */
+    private int currentEffectIndex;
+    private EFXUnderwater underwaterEffect;
+    
 	// singleton 
 	private LWJGLSoundImpl() {
 	}
@@ -84,7 +82,7 @@ public final class LWJGLSoundImpl implements Sound {
 		try {
 			initOpenAL();
 			checkError();
-			// initOpenALExtensions(); <- If possible, replace with EFX10 - flibit		
+			initOpenALExtensions();
 		} catch (OpenALException e) {
 			Com.Printf(e.getMessage() + '\n');
 			return false;
@@ -151,44 +149,18 @@ public final class LWJGLSoundImpl implements Sound {
 		}
 	}
 	
-	/*
-	
-	This is old EAX code. If possible, replace with EFX10 - flibit
-	
-	private void initOpenALExtensions() throws OpenALException 
+	/** Initializes OpenAL EFX effects. */
+	private void initOpenALExtensions() 
 	{
-		if (AL10.alIsExtensionPresent("EAX2.0")) 
-		{
-			try {
-				EAX.create();
-				Com.Printf("... using EAX2.0\n");
-				hasEAX=true;
-			} catch (LWJGLException e) {
-				Com.Printf("... can't create EAX2.0\n");
-				hasEAX=false;
-			}
-		} 
-		else 
-		{
-			Com.Printf("... EAX2.0 not found\n");
-			hasEAX=false;
-		}
+		Com.Printf("... using EFX effects:\n");
+		underwaterEffect = new EFXUnderwater();
 	}
-	
-	*/
 	
 	
 	void exitOpenAL() 
 	{
-		/*
-		
-		This is old EAX code. If possible, replace with EFX10 - flibit
-		
-		// Release the EAX context.
-		if (hasEAX){
-			EAX.destroy();
-		}
-		*/
+		// Unload EFX Effects
+		underwaterEffect.killEffect();
 		
 		// Release the context and the device.
 		AL.destroy();
@@ -287,40 +259,16 @@ public final class LWJGLSoundImpl implements Sound {
 		// set the master volume
 		AL10.alListenerf(AL10.AL_GAIN, s_volume.value);
 		
-		/*
-		
-		This is old EAX code. If possible, replace with EFX10 - flibit
-		
-		if (hasEAX){
-			if ((GameBase.gi.pointcontents.pointcontents(origin)& Defines.MASK_WATER)!= 0) {
-				changeEnvironment(EAX20.EAX_ENVIRONMENT_UNDERWATER);
-			} else {
-				changeEnvironment(EAX20.EAX_ENVIRONMENT_GENERIC);
-			}
-		}
-		
-		*/
+		// Detect EFX Conditions
+		if ((GameBase.gi.pointcontents.pointcontents(origin)& Defines.MASK_WATER)!= 0)
+			currentEffectIndex = underwaterEffect.getIndex();
+		else
+			currentEffectIndex = EFX10.AL_EFFECTSLOT_NULL;
 		
 	    Channel.addLoopSounds();
 	    Channel.addPlaySounds();
-		Channel.playAllSounds(listenerOrigin);
+		Channel.playAllSounds(listenerOrigin, currentEffectIndex);
 	}
-	
-	/*
-	
-	This is old EAX code. If possible, replace with EFX10 - flibit
-	
-	private IntBuffer eaxEnv = Lib.newIntBuffer(1);
-	private int currentEnv = EAX20.EAX_ENVIRONMENT_UNDERWATER;
-	
-	private void changeEnvironment(int env) {
-		if (env == currentEnv) return;
-		currentEnv = env;
-		eaxEnv.put(0, currentEnv);
-		EAX20.eaxSet(EAX20.LISTENER_GUID, EAXListenerProperties.EAXLISTENER_ENVIRONMENT | EAXListenerProperties.EAXLISTENER_DEFERRED, 0, eaxEnv, 4);
-	}
-	
-	*/
 
 	/* (non-Javadoc)
 	 * @see jake2.sound.SoundImpl#StopAllSounds()

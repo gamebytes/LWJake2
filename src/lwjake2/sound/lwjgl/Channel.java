@@ -37,6 +37,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.lwjgl.openal.AL10;
+import org.lwjgl.openal.AL11;
+import org.lwjgl.openal.EFX10;
 
 /**
  * Channel
@@ -52,7 +54,7 @@ public class Channel {
 	
 	private static Channel[] channels = new Channel[MAX_CHANNELS];
 	private static IntBuffer sources = Lib.newIntBuffer(MAX_CHANNELS);
-	// a reference of L:WJGLSoundImpl.buffers 
+	// a reference of LWJGLSoundImpl.buffers 
 	private static IntBuffer buffers;
 	private static Map looptable = new Hashtable(MAX_CHANNELS);
 
@@ -289,7 +291,7 @@ public class Channel {
 	//stack variable
 	private static float[] entityOrigin = {0, 0, 0};
  
-	static void playAllSounds(FloatBuffer listenerOrigin) {
+	static void playAllSounds(FloatBuffer listenerOrigin, int currentEffectIndex) {
 		FloatBuffer sourceOrigin = sourceOriginBuffer;
 		Channel ch;
 		int sourceId;
@@ -323,6 +325,7 @@ public class Channel {
 					}
 					AL10.alSourcef (sourceId, AL10.AL_ROLLOFF_FACTOR, ch.rolloff);
 					AL10.alSource3f(sourceId, AL10.AL_POSITION, sourceOrigin.get(), sourceOrigin.get(), sourceOrigin.get());
+					AL11.alSource3i(sourceId, EFX10.AL_AUXILIARY_SEND_FILTER, currentEffectIndex, 0, EFX10.AL_FILTER_NULL);
 					AL10.alSourcePlay(sourceId);
 					sourceOrigin.rewind();
 					ch.modified = false;
