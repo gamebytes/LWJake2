@@ -291,7 +291,7 @@ public class Channel {
 	//stack variable
 	private static float[] entityOrigin = {0, 0, 0};
  
-	static void playAllSounds(FloatBuffer listenerOrigin, int currentEffectIndex) {
+	static void playAllSounds(FloatBuffer listenerOrigin, int currentEffectIndex, int currentFilterIndex) {
 		FloatBuffer sourceOrigin = sourceOriginBuffer;
 		Channel ch;
 		int sourceId;
@@ -326,6 +326,7 @@ public class Channel {
 					AL10.alSourcef (sourceId, AL10.AL_ROLLOFF_FACTOR, ch.rolloff);
 					AL10.alSource3f(sourceId, AL10.AL_POSITION, sourceOrigin.get(), sourceOrigin.get(), sourceOrigin.get());
 					AL11.alSource3i(sourceId, EFX10.AL_AUXILIARY_SEND_FILTER, currentEffectIndex, 0, EFX10.AL_FILTER_NULL);
+					AL10.alSourcei(sourceId, EFX10.AL_DIRECT_FILTER, currentFilterIndex);
 					AL10.alSourcePlay(sourceId);
 					sourceOrigin.rewind();
 					ch.modified = false;
