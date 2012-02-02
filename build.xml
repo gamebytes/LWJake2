@@ -166,7 +166,7 @@
 				<include name="executables/**"/>
 				<include name="findbugs/**"/>
 				<include name="lib/**"/>				
-				<include name="doc/*.*"/>
+				<include name="doc/**"/>
 				<include name="src/**"/>
 				<include name="build.xml"/>
 			</zipfileset>
