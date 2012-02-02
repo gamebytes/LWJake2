@@ -207,7 +207,7 @@ public abstract class LWJGLBase {
 		// destroy the existing window
 		GLimp_Shutdown();
 
-		Display.setTitle("Jake2");
+		Display.setTitle("LWJake2");
 
 		DisplayMode displayMode = findDisplayMode(newDim);
 		newDim.width = displayMode.getWidth();

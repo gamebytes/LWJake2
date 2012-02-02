@@ -70,7 +70,7 @@ public final class LWJake2 {
         // in C the first arg is the filename
         int argc = (args == null) ? 1 : args.length + 1;
         String[] c_args = new String[argc];
-        c_args[0] = "Jake2";
+        c_args[0] = "LWJake2";
         if (argc > 1) {
             System.arraycopy(args, 0, c_args, 1, argc - 1);
         }

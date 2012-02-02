@@ -37,36 +37,36 @@ public final class InputListener implements KeyListener, MouseListener,
 		MouseMotionListener, ComponentListener, MouseWheelListener {
 
 	// modifications of eventQueue must be thread safe!
-	private static LinkedList<Jake2InputEvent> eventQueue = new LinkedList<Jake2InputEvent>();
+	private static LinkedList<LWJake2InputEvent> eventQueue = new LinkedList<LWJake2InputEvent>();
 
-	static void addEvent(Jake2InputEvent ev) {
+	static void addEvent(LWJake2InputEvent ev) {
 		synchronized (eventQueue) {
 			eventQueue.addLast(ev);
 		}
 	}
 
-	static Jake2InputEvent nextEvent() {
-		Jake2InputEvent ev;
+	static LWJake2InputEvent nextEvent() {
+		LWJake2InputEvent ev;
 		synchronized (eventQueue) {
-			ev = (!eventQueue.isEmpty())?(Jake2InputEvent)eventQueue.removeFirst():null;
+			ev = (!eventQueue.isEmpty())?(LWJake2InputEvent)eventQueue.removeFirst():null;
 		}
 		return ev;
 	}
 
 	public void keyPressed(KeyEvent e) {
 		if (!((e.getModifiersEx() & InputEvent.ALT_GRAPH_DOWN_MASK) != 0)) {
-			addEvent(new Jake2InputEvent(Jake2InputEvent.KeyPress, e));
+			addEvent(new LWJake2InputEvent(LWJake2InputEvent.KeyPress, e));
 		}
 	}
 
 	public void keyReleased(KeyEvent e) {
-		addEvent(new Jake2InputEvent(Jake2InputEvent.KeyRelease, e));
+		addEvent(new LWJake2InputEvent(LWJake2InputEvent.KeyRelease, e));
 	}
 
 	public void keyTyped(KeyEvent e) {
 		if ((e.getModifiersEx() & InputEvent.ALT_GRAPH_DOWN_MASK) != 0) {
-			addEvent(new Jake2InputEvent(Jake2InputEvent.KeyPress, e));
-			addEvent(new Jake2InputEvent(Jake2InputEvent.KeyRelease, e));
+			addEvent(new LWJake2InputEvent(LWJake2InputEvent.KeyPress, e));
+			addEvent(new LWJake2InputEvent(LWJake2InputEvent.KeyRelease, e));
 		}		
 	}
 
@@ -80,39 +80,39 @@ public final class InputListener implements KeyListener, MouseListener,
 	}
 
 	public void mousePressed(MouseEvent e) {
-		addEvent(new Jake2InputEvent(Jake2InputEvent.ButtonPress, e));
+		addEvent(new LWJake2InputEvent(LWJake2InputEvent.ButtonPress, e));
 	}
 
 	public void mouseReleased(MouseEvent e) {
-		addEvent(new Jake2InputEvent(Jake2InputEvent.ButtonRelease, e));
+		addEvent(new LWJake2InputEvent(LWJake2InputEvent.ButtonRelease, e));
 	}
 
 	public void mouseDragged(MouseEvent e) {
-		addEvent(new Jake2InputEvent(Jake2InputEvent.MotionNotify, e));
+		addEvent(new LWJake2InputEvent(LWJake2InputEvent.MotionNotify, e));
 	}
 
 	public void mouseMoved(MouseEvent e) {
-		addEvent(new Jake2InputEvent(Jake2InputEvent.MotionNotify, e));
+		addEvent(new LWJake2InputEvent(LWJake2InputEvent.MotionNotify, e));
 	}
 
 	public void componentHidden(ComponentEvent e) {
 	}
 
 	public void componentMoved(ComponentEvent e) {
-		addEvent(new Jake2InputEvent(Jake2InputEvent.ConfigureNotify, e));
+		addEvent(new LWJake2InputEvent(LWJake2InputEvent.ConfigureNotify, e));
 	}
 
 	public void componentResized(ComponentEvent e) {
-		addEvent(new Jake2InputEvent(Jake2InputEvent.ConfigureNotify, e));
+		addEvent(new LWJake2InputEvent(LWJake2InputEvent.ConfigureNotify, e));
 	}
 
 	public void componentShown(ComponentEvent e) {
 		JOGLKBD.c = e.getComponent();
-		addEvent(new Jake2InputEvent(Jake2InputEvent.CreateNotify, e));
+		addEvent(new LWJake2InputEvent(LWJake2InputEvent.CreateNotify, e));
 	}
 
     public void mouseWheelMoved(MouseWheelEvent e) {
-        addEvent(new Jake2InputEvent(Jake2InputEvent.WheelMoved, e));
+        addEvent(new LWJake2InputEvent(LWJake2InputEvent.WheelMoved, e));
     }	
 
 }

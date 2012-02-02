@@ -21,9 +21,9 @@ package lwjake2.sys;
 import java.awt.AWTEvent;
 
 /**
- * Jake2InputEvent
+ * LWJake2InputEvent
  */
-class Jake2InputEvent {
+class LWJake2InputEvent {
 	static final int KeyPress = 0;
 	static final int KeyRelease = 1;
 	static final int MotionNotify = 2;
@@ -35,7 +35,7 @@ class Jake2InputEvent {
 	int type;
 	AWTEvent ev;
 	
-	Jake2InputEvent(int type, AWTEvent ev) {
+	LWJake2InputEvent(int type, AWTEvent ev) {
 		this.type = type;
 		this.ev = ev;
 	}

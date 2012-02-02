@@ -67,15 +67,15 @@ final public class JOGLKBD extends KBD
 	{
 		int key;
 
-		Jake2InputEvent event;
+		LWJake2InputEvent event;
 		while ( (event=InputListener.nextEvent()) != null ) {
 			switch(event.type) {
-				case Jake2InputEvent.KeyPress:
-				case Jake2InputEvent.KeyRelease:
-					Do_Key_Event(XLateKey((KeyEvent)event.ev), event.type == Jake2InputEvent.KeyPress);
+				case LWJake2InputEvent.KeyPress:
+				case LWJake2InputEvent.KeyRelease:
+					Do_Key_Event(XLateKey((KeyEvent)event.ev), event.type == LWJake2InputEvent.KeyPress);
 					break;
 
-				case Jake2InputEvent.MotionNotify:
+				case LWJake2InputEvent.MotionNotify:
 //					if (IN.ignorefirst) {
 //						IN.ignorefirst = false;
 //						break;
@@ -89,17 +89,17 @@ final public class JOGLKBD extends KBD
 					}
 					break;
 				// see java.awt.MouseEvent
-				case Jake2InputEvent.ButtonPress:
+				case LWJake2InputEvent.ButtonPress:
 					key = mouseEventToKey((MouseEvent)event.ev); 
 					Do_Key_Event(key, true);
 					break;
  
-				case Jake2InputEvent.ButtonRelease:
+				case LWJake2InputEvent.ButtonRelease:
 					key = mouseEventToKey((MouseEvent)event.ev); 
 					Do_Key_Event(key, false);
 					break;
 					
-				case Jake2InputEvent.WheelMoved:
+				case LWJake2InputEvent.WheelMoved:
 					int dir = ((MouseWheelEvent)event.ev).getWheelRotation();
 					if (dir > 0) {
 						Do_Key_Event(Key.K_MWHEELDOWN, true);
@@ -110,8 +110,8 @@ final public class JOGLKBD extends KBD
 					}
 					break;
 					 
-				case Jake2InputEvent.CreateNotify :
-				case Jake2InputEvent.ConfigureNotify :
+				case LWJake2InputEvent.CreateNotify :
+				case LWJake2InputEvent.ConfigureNotify :
 					Component c = ((ComponentEvent)event.ev).getComponent();
 					win_x = 0;
 					win_y = 0;
