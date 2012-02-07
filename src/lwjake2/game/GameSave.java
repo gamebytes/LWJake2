@@ -232,10 +232,7 @@ public class GameSave {
             if (!autosave)
                 PlayerClient.SaveClientData();
 
-            f = new QuakeFile(filename, "rw");
-
-            if (f == null)
-                GameBase.gi.error("Couldn't write to " + filename);
+            f = new QuakeFile(filename, "rw");  
 
             GameBase.game.autosaved = autosave;
             GameBase.game.write(f);
@@ -247,6 +244,7 @@ public class GameSave {
             Lib.fclose(f);
         } catch (Exception e) {
             e.printStackTrace();
+            GameBase.gi.error("Couldn't write to " + filename);
         }
     }
 
@@ -284,9 +282,7 @@ public class GameSave {
             QuakeFile f;
 
             f = new QuakeFile(filename, "rw");
-            if (f == null)
-                GameBase.gi.error("Couldn't open for writing: " + filename);
-
+            
             // write out level_locals_t
             GameBase.level.write(f);
 
@@ -305,6 +301,7 @@ public class GameSave {
             f.close();
         } catch (Exception e) {
             e.printStackTrace();
+            GameBase.gi.error("Couldn't open for writing: " + filename);
         }
     }
 
@@ -326,9 +323,6 @@ public class GameSave {
             edict_t ent;
 
             QuakeFile f = new QuakeFile(filename, "r");
-
-            if (f == null)
-                GameBase.gi.error("Couldn't read level file " + filename);
 
             // wipe all the entities
             CreateEdicts();
@@ -376,6 +370,7 @@ public class GameSave {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            GameBase.gi.error("Couldn't read level file " + filename);
         }
     }
 }

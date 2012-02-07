@@ -56,7 +56,7 @@ public class Channel {
 	private static IntBuffer sources = Lib.newIntBuffer(MAX_CHANNELS);
 	// a reference of LWJGLSoundImpl.buffers 
 	private static IntBuffer buffers;
-	private static Map looptable = new Hashtable(MAX_CHANNELS);
+	private static Map<Integer, Channel> looptable = new Hashtable<Integer, Channel>(MAX_CHANNELS);
 
 	private static int numChannels;
     
@@ -362,7 +362,7 @@ public class Channel {
 		sfxcache_t sc;
 		int num;
 		entity_state_t ent;
-		Object key;
+		int key;
 		int sound = 0;
 
 		for (int i=0 ; i<Globals.cl.frame.num_entities ; i++) {
@@ -372,8 +372,8 @@ public class Channel {
 
 			if (sound == 0) continue;
 
-			key = new Integer(ent.number);
-			ch = (Channel)looptable.get(key);
+			key = ent.number;
+			ch = looptable.get(key);
 
 			if (ch != null) {
 				// keep on looping
@@ -410,8 +410,8 @@ public class Channel {
 	private static void removeUnusedLoopSounds() {
 		Channel ch;
 		// stop unused loopsounds
-		for (Iterator iter = looptable.values().iterator(); iter.hasNext();) {
-			ch = (Channel)iter.next();
+		for (Iterator<Channel> iter = looptable.values().iterator(); iter.hasNext();) {
+			ch = iter.next();
 			if (!ch.autosound) {
 				AL10.alSourceStop(ch.sourceId);
 				AL10.alSourcei(ch.sourceId, AL10.AL_LOOPING, AL10.AL_FALSE);

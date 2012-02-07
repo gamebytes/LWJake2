@@ -30,7 +30,7 @@ public class Vargs {
 	// initial capacity
 	static final int SIZE = 5;
 
-	Vector v;
+	Vector<Object> v;
 
 	public Vargs() {
 		this(SIZE);
@@ -39,7 +39,7 @@ public class Vargs {
 	public Vargs(int initialSize) {
 		if (v != null)
 			v.clear(); // clear previous list for GC
-		v = new Vector(initialSize);
+		v = new Vector<Object>(initialSize);
 	}
 
 	public Vargs add(boolean value) {
@@ -97,12 +97,14 @@ public class Vargs {
 		return this;
 	}
 
+	/* This apparently isn't even used? - flibit
 	public Vector toVector() {
 		//		Vector tmp = v;
 		//		v = null;
 		//		return tmp;
 		return (Vector) v.clone();
 	}
+	*/
 
 	public Object[] toArray() {
 		return v.toArray();

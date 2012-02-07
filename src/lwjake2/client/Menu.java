@@ -2172,16 +2172,11 @@ public final class Menu extends Key {
 
             try {
                 f = new QuakeFile(name, "r");
-                if (f == null) {
-                    m_savestrings[i] = "<EMPTY>";
-                    m_savevalid[i] = false;
-                } else {
-                    String str = f.readString();
-                    if (str != null)
-                        m_savestrings[i] = str;
-                    f.close();
-                    m_savevalid[i] = true;
-                }
+                String str = f.readString();
+                if (str != null)
+                	m_savestrings[i] = str;
+                f.close();
+                m_savevalid[i] = true;
             } catch (Exception e) {
                 m_savestrings[i] = "<EMPTY>";
                 m_savevalid[i] = false;
@@ -2707,12 +2702,24 @@ public final class Menu extends Key {
          */
         mapsname = FS.Gamedir() + "/maps.lst";
 
+        // Check user dir first (default ~/.lwjake2)
         if ((fp = Lib.fopen(mapsname, "r")) == null) {
-            buffer = FS.LoadFile("maps.lst");
-            if (buffer == null)
-                //if ((length = FS_LoadFile("maps.lst", (Object *) & buffer))
-                // == -1)
-                Com.Error(ERR_DROP, "couldn't find maps.lst\n");
+        	// Check base dir first (baseq2 folder)
+        	mapsname = FS.BaseGamedir() + "/maps.lst";
+        	if ((fp = Lib.fopen(mapsname, "r")) == null) {
+        		// Open the pak's maplist
+	            buffer = FS.LoadFile("maps.lst");
+	            if (buffer == null)
+	                Com.Error(ERR_DROP, "couldn't find maps.lst\n");
+        	} else {
+                try {
+                    int len = (int) fp.length();
+                    buffer = new byte[len];
+                    fp.readFully(buffer);
+                } catch (Exception e) {
+                    Com.Error(ERR_DROP, "couldn't load maps.lst\n");
+                }
+            }
         } else {
             try {
                 int len = (int) fp.length();
@@ -3804,18 +3811,12 @@ public final class Menu extends Key {
             pcxnames = FS.ListFiles(scratch, 0, 0);
             npcxfiles = pcxnames.length;
 
-            if (pcxnames == null) {
-
-                dirnames[i] = null;
-                continue;
-            }
-
             // count valid skins, which consist of a skin with a matching "_i"
             // icon
             for (k = 0; k < npcxfiles - 1; k++) {
                 if (!pcxnames[k].endsWith("_i.pcx")) {
                     //if (!strstr(pcxnames[k], "_i.pcx")) {
-                    if (IconOfSkinExists(pcxnames[k], pcxnames, npcxfiles - 1)) {
+                    if (IconOfSkinExists(pcxnames[k], pcxnames, npcxfiles)) {
                         nskins++;
                     }
                 }
@@ -3828,10 +3829,10 @@ public final class Menu extends Key {
             //memset(skinnames, 0, sizeof(String) * (nskins + 1));
 
             // copy the valid skins
-            for (s = 0, k = 0; k < npcxfiles - 1; k++) {
+            for (s = 0, k = 0; k < npcxfiles; k++) {
 
                 if (pcxnames[k].indexOf("_i.pcx") < 0) {
-                    if (IconOfSkinExists(pcxnames[k], pcxnames, npcxfiles - 1)) {
+                    if (IconOfSkinExists(pcxnames[k], pcxnames, npcxfiles)) {
                         a = pcxnames[k].lastIndexOf('/');
                         b = pcxnames[k].lastIndexOf('\\');
 
@@ -3878,9 +3879,7 @@ public final class Menu extends Key {
 
     }
 
-    static int pmicmpfnc(Object _a, Object _b) {
-        playermodelinfo_s a = (playermodelinfo_s) _a;
-        playermodelinfo_s b = (playermodelinfo_s) _b;
+    static int pmicmpfnc(playermodelinfo_s a, playermodelinfo_s b) {
 
         /*
          * * sort by male, female, then alphabetical
@@ -3938,8 +3937,8 @@ public final class Menu extends Key {
         }
 
         //qsort(s_pmi, s_numplayermodels, sizeof(s_pmi[0]), pmicmpfnc);
-        Arrays.sort(s_pmi, 0, s_numplayermodels, new Comparator() {
-            public int compare(Object o1, Object o2) {
+        Arrays.sort(s_pmi, 0, s_numplayermodels, new Comparator<playermodelinfo_s>() {
+            public int compare(playermodelinfo_s o1, playermodelinfo_s o2) {
                 return pmicmpfnc(o1, o2);
             }
         });

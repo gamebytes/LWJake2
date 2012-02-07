@@ -34,7 +34,7 @@ public class S {
 	static Sound impl;
 	static cvar_t s_impl;
 	
-	static Vector drivers = new Vector(1);
+	static Vector<Sound> drivers = new Vector<Sound>(1);
 	
 	/** 
 	 * Searches for and initializes all known sound drivers.
@@ -78,14 +78,14 @@ public class S {
 		Sound driver = null;
 		int count = drivers.size();
 		for (int i = 0; i < count; i++) {
-			driver = (Sound) drivers.get(i);
+			driver = drivers.get(i);
 			if (driver.getName().equals(driverName)) {
 				impl = driver;
 				return;
 			}
 		}
 		// if driver not found use dummy
-		impl = (Sound)drivers.lastElement();
+		impl = drivers.lastElement();
 	}
 	
 	/**
@@ -105,7 +105,7 @@ public class S {
 		// set the last registered driver as default
 		String defaultDriver = "dummy";
 		if (drivers.size() > 1){
-			defaultDriver = ((Sound)drivers.lastElement()).getName();
+			defaultDriver = (drivers.lastElement()).getName();
 		}
 		
 		s_impl = Cvar.Get("s_impl", defaultDriver, Defines.CVAR_ARCHIVE);
@@ -203,7 +203,7 @@ public class S {
 	public static String[] getDriverNames() {
 		String[] names = new String[drivers.size()];
 		for (int i = 0; i < names.length; i++) {
-			names[i] = ((Sound)drivers.get(i)).getName();
+			names[i] = (drivers.get(i)).getName();
 		}
 		return names;
 	}
