@@ -144,13 +144,11 @@ public final class Qcommon extends Globals {
 
 				if (Globals.log_stats.value != 0.0f) {
 
-					if (Globals.log_stats_file != null) {
-						try {
-							Globals.log_stats_file.close();
-						} catch (IOException e) {
-						}
-						Globals.log_stats_file= null;
+					try {
+						Globals.log_stats_file.close();
+					} catch (IOException e) {
 					}
+					Globals.log_stats_file= null;
 
 					try {
 						Globals.log_stats_file= new FileWriter("stats.log");
