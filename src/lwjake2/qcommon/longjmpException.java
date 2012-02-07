@@ -21,6 +21,7 @@ package lwjake2.qcommon;
 /**
  * longjmpException is used to replace the setjmp/longjmp code.
  */
+@SuppressWarnings("serial")
 public final class longjmpException extends IllegalStateException {
 
 }

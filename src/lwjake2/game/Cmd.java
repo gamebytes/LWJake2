@@ -162,13 +162,11 @@ public final class Cmd {
 
     private static char temporary[] = new char[Defines.MAX_STRING_CHARS];
 
-    public static Comparator PlayerSort = new Comparator() {
-        public int compare(Object o1, Object o2) {
-            int anum = ((Integer) o1).intValue();
-            int bnum = ((Integer) o2).intValue();
+    public static Comparator<Integer> PlayerSort = new Comparator<Integer>() {
+        public int compare(Integer o1, Integer o2) {
     
-            int anum1 = GameBase.game.clients[anum].ps.stats[Defines.STAT_FRAGS];
-            int bnum1 = GameBase.game.clients[bnum].ps.stats[Defines.STAT_FRAGS];
+            int anum1 = GameBase.game.clients[o1].ps.stats[Defines.STAT_FRAGS];
+            int bnum1 = GameBase.game.clients[o2].ps.stats[Defines.STAT_FRAGS];
     
             if (anum1 < bnum1)
                 return -1;
@@ -1183,8 +1181,8 @@ public final class Cmd {
     /**
      * Cmd_CompleteCommand.
      */
-    public static Vector CompleteCommand(String partial) {
-        Vector cmds = new Vector();
+    public static Vector<String> CompleteCommand(String partial) {
+        Vector<String> cmds = new Vector<String>();
 
         // check for match
         for (cmd_function_t cmd = cmd_functions; cmd != null; cmd = cmd.next)

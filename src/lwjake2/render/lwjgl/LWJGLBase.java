@@ -69,7 +69,7 @@ public abstract class LWJGLBase {
 			
 			modes = Display.getAvailableDisplayModes();
 			
-			LinkedList l = new LinkedList();
+			LinkedList<java.awt.DisplayMode> l = new LinkedList<java.awt.DisplayMode>();
 			l.add(toAwtDisplayMode(oldDisplayMode));
 			
 			for (int i = 0; i < modes.length; i++) {
@@ -109,7 +109,7 @@ public abstract class LWJGLBase {
 		try {
 			DisplayMode[] modes = Display.getAvailableDisplayModes();
 			
-			LinkedList l = new LinkedList();
+			LinkedList<DisplayMode> l = new LinkedList<DisplayMode>();
 			l.add(oldDisplayMode);
 			
 			for (int i = 0; i < modes.length; i++) {

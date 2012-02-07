@@ -29,7 +29,7 @@ import java.util.Vector;
  */
 public class Renderer {
 
-	static Vector drivers = new Vector(1);
+	static Vector<Ref> drivers = new Vector<Ref>(1);
 
 	static {
 		try {
@@ -62,7 +62,7 @@ public class Renderer {
 		Ref driver = null;
 		int count = drivers.size();
 		for (int i = 0; i < count; i++) {
-			driver = (Ref) drivers.get(i);
+			driver = drivers.get(i);
 			if (driver.getName().equals(driverName)) {
 				return driver.GetRefAPI();
 			}
@@ -72,11 +72,11 @@ public class Renderer {
 	}
 	
 	public static String getDefaultName() {
-		return (drivers.isEmpty()) ? null : ((Ref) drivers.firstElement()).getName();
+		return (drivers.isEmpty()) ? null : (drivers.firstElement()).getName();
 	}
 
 	public static String getPreferedName() {
-		return (drivers.isEmpty()) ? null :  ((Ref) drivers.lastElement()).getName();
+		return (drivers.isEmpty()) ? null :  (drivers.lastElement()).getName();
 	}
 
 	public static String[] getDriverNames() {
@@ -84,7 +84,7 @@ public class Renderer {
 		int count = drivers.size();
 		String[] names = new String[count];
 		for (int i = 0; i < count; i++) {
-			names[i] = ((Ref) drivers.get(i)).getName();
+			names[i] = (drivers.get(i)).getName();
 		}
 		return names;
 	}

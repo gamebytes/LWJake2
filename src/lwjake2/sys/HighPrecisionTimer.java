@@ -20,6 +20,8 @@ package lwjake2.sys;
 
 import sun.misc.Perf;
 
+// TODO: Is there an alternative to sun.misc.Perf? - flibit
+
 class HighPrecisionTimer extends Timer {
 
 	private Perf perf = Perf.getPerf();
