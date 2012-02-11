@@ -75,6 +75,12 @@
 		<copy file="lib/lwjgl_native/liblwjgl64.so" todir="built/Linux"/>
 		<copy file="lib/lwjgl_native/libopenal.so" todir="built/Linux"/>
 		<copy file="lib/lwjgl_native/libopenal64.so" todir="built/Linux"/>
+		
+		<!-- Create the zip distribution -->
+		<mkdir dir="built/zip"/>
+		<zip destfile="built/zip/LWJake2-Linux.zip">
+			<zipfileset dir="built/Linux" prefix="LWJake2"/>
+		</zip>
 	</target>
 
 	<!-- Build OSX version of LWJake2 -->
@@ -102,6 +108,12 @@
 		<!-- Copy OSX native libraries -->
 		<copy file="lib/lwjgl_native/liblwjgl.jnilib" todir="built/OSX"/>
 		<copy file="lib/lwjgl_native/openal.dylib" todir="built/OSX"/>
+		
+		<!-- Create the zip distribution -->
+		<mkdir dir="built/zip"/>
+		<zip destfile="built/zip/LWJake2-OSX.zip">
+			<zipfileset dir="built/OSX" prefix="LWJake2"/>
+		</zip>
 	</target>
 
 	<!-- Build Windows version of LWJake2 -->
@@ -131,6 +143,12 @@
 		<copy file="lib/lwjgl_native/lwjgl64.dll" todir="built/Windows"/>
 		<copy file="lib/lwjgl_native/OpenAL32.dll" todir="built/Windows"/>
 		<copy file="lib/lwjgl_native/OpenAL64.dll" todir="built/Windows"/>
+		
+		<!-- Create the zip distribution -->
+		<mkdir dir="built/zip"/>
+		<zip destfile="built/zip/LWJake2-Windows.zip">
+			<zipfileset dir="built/Windows" prefix="LWJake2"/>
+		</zip>
 	</target>
 	
 	<!-- Build the server version of LWJake2 -->
@@ -146,6 +164,12 @@
 		<!-- Copy executable files -->
 		<copy file="executables/LWJake2_Server.sh" todir="built/Server"/>
 		<copy file="executables/LWJake2_Server.bat" todir="built/Server"/>
+		
+		<!-- Create the zip distribution -->
+		<mkdir dir="built/zip"/>
+		<zip destfile="built/zip/LWJake2-Server.zip">
+			<zipfileset dir="built/Server" prefix="LWJake2"/>
+		</zip>
 	</target>
 
 	<!-- Build the source distribution -->

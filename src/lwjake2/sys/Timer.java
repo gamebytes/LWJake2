@@ -31,11 +31,7 @@ public abstract class Timer {
 		try {
 			t = new NanoTimer();
 		} catch (Throwable e) {
-			try {
-				t = new HighPrecisionTimer();
-			} catch (Throwable e1) {
-				t = new StandardTimer();
-			}
+			t = new StandardTimer();
 		}
 		Com.Println("using " + t.getClass().getName());
 	}
