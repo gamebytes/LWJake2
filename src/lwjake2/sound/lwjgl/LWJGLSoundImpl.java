@@ -42,8 +42,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
-import com.flibitijibibo.flibitEFX.EFXEffectUnderwater;
-import com.flibitijibibo.flibitEFX.EFXFilterUnderwater;
+import com.flibitijibibo.flibitEFX.EFXFilterLowPass;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL10;
@@ -70,8 +69,7 @@ public final class LWJGLSoundImpl implements Sound {
     /** EFX Variables */
     private int currentEffectIndex;
     private int currentFilterIndex;
-    private EFXEffectUnderwater underwaterEffect;
-    private EFXFilterUnderwater underwaterFilter;
+    private EFXFilterLowPass underwaterFilter;
     
 	// singleton 
 	private LWJGLSoundImpl() {
@@ -156,15 +154,13 @@ public final class LWJGLSoundImpl implements Sound {
 	private void initOpenALExtensions() 
 	{
 		Com.Printf("... using EFX effects:\n");
-		underwaterEffect = new EFXEffectUnderwater();
-		underwaterFilter = new EFXFilterUnderwater();
+		underwaterFilter = new EFXFilterLowPass();
 	}
 	
 	
 	void exitOpenAL() 
 	{
 		// Unload EFX Effects
-		underwaterEffect.killEffect();
 		underwaterFilter.killFilter();
 		
 		// Release the context and the device.
@@ -266,7 +262,6 @@ public final class LWJGLSoundImpl implements Sound {
 		
 		// Detect EFX Conditions
 		if ((GameBase.gi.pointcontents.pointcontents(origin)& Defines.MASK_WATER)!= 0) {
-			currentEffectIndex = underwaterEffect.getIndex();
 			currentFilterIndex = underwaterFilter.getIndex();
 		}
 		else {
