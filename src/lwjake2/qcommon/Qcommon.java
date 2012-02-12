@@ -69,8 +69,6 @@ public final class Qcommon extends Globals {
 			Cbuf.Execute();
 			
 			FS.InitFilesystem();
-
-			System.out.println(FS.fs_gamedir);
 			
 			reconfigure(false);
 
