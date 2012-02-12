@@ -69,11 +69,14 @@ public final class Qcommon extends Globals {
 			Cbuf.Execute();
 			
 			FS.InitFilesystem();
+
+			System.out.println(FS.fs_gamedir);
 			
 			reconfigure(false);
 
 			FS.setCDDir(); // use cddir from config.cfg
 			FS.markBaseSearchPaths(); // mark the default search paths
+			FS.checkOverride();
 			
 			reconfigure(true); // reload default.cfg and config.cfg
 			

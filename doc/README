@@ -39,7 +39,7 @@ need to move your baseq2/ to that folder. However, you can change this by
 modifying the "cddir" cvar in your config.cfg. For example, if I wanted to
 host my data in ~/.quake2, I would add the following to my config.cfg:
 
-set cddir "/home/flibitijibibo/.quake2/baseq2"
+set cddir "/home/flibitijibibo/.quake2"
 
 Be sure to check for "set cddir" first! LWJake2 adds this in the default config.
 
@@ -47,12 +47,15 @@ Credits
 =======
 
 Bytonic Software - Original Jake2 authors
-------------
+-----------------------------------------
 Holger Zickner <hoz@bytonic.de>
 Carsten Weisse <cwei@bytonic.de>
 Rene Stoeckel  <rst@bytonic.de>
+
+Jake2 Community - Other Jake2 contributors
+------------------------------------------
 David Sanders - Original LWJGL implementation
 
 12characters Games - LWJake2 authors
-----------------
+------------------------------------
 Ethan Lee <flibitijibibo@flibitijibibo.com>

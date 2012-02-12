@@ -925,10 +925,7 @@ public final class FS extends Globals {
         markBaseSearchPaths();
 
         // check for game override
-        fs_gamedirvar = Cvar.Get("game", "", CVAR_LATCH | CVAR_SERVERINFO);
-
-        if (fs_gamedirvar.string.length() > 0)
-            SetGamedir(fs_gamedirvar.string);
+        checkOverride();
     }
 
     /**
@@ -937,7 +934,15 @@ public final class FS extends Globals {
     static void setCDDir() {
         fs_cddir = Cvar.Get("cddir", "", CVAR_ARCHIVE);
         if (fs_cddir.string.length() > 0)
-            AddGameDirectory(fs_cddir.string);
+            AddGameDirectory(fs_cddir.string + '/' + Globals.BASEDIRNAME);
+    }
+    
+    /** Check for "+set game" override - Used to properly set gamedir */
+    static void checkOverride() {
+    	fs_gamedirvar = Cvar.Get("game", "", CVAR_LATCH | CVAR_SERVERINFO);
+
+        if (fs_gamedirvar.string.length() > 0)
+            SetGamedir(fs_gamedirvar.string);
     }
     
     static void markBaseSearchPaths() {
