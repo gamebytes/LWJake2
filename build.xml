@@ -23,7 +23,7 @@
 	<target name="compile" depends="clean">
 		<!-- Compile the source code with javac -->
 		<mkdir dir="built/javac"/>
-		<javac destdir="built/javac" debug="on" source="1.7" includeantruntime="false">
+		<javac destdir="built/javac" debug="on" source="1.5" includeantruntime="false">
 			<src path="src"/>
 			<classpath refid="libPath"/>
 		</javac>
