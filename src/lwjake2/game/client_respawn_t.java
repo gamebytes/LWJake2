@@ -46,7 +46,7 @@ public class client_respawn_t
 	protected boolean voted; // for elections
 	protected boolean ready;
 	protected boolean admin;
-	protected ghost_s ghost; // for ghost codes
+	protected ghost_t ghost; // for ghost codes
 	//ZOID-CTF
 	
 	/** angles sent over in the last command. */
