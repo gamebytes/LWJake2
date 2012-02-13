@@ -66,6 +66,11 @@ public class GameBase {
     public static cvar_t fraglimit = new cvar_t();
 
     public static cvar_t timelimit = new cvar_t();
+    
+    //ZOID-CTF
+    public static cvar_t capturelimit = new cvar_t();
+    public static cvar_t instantweap = new cvar_t();
+    //ZOID-CTF
 
     public static cvar_t password = new cvar_t();
 
@@ -118,6 +123,10 @@ public class GameBase {
     public static cvar_t sv_maplist = new cvar_t();
 
     public final static float STOP_EPSILON = 0.1f;
+    
+    //ZOID-CTF
+    public static boolean is_quad;
+    //ZOID-CTF
 
     /**
      * Slide off of the impacting object returns the blocked flags (1 = floor, 2 =

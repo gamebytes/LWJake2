@@ -907,6 +907,9 @@ public class Defines {
 	public final static int IT_STAY_COOP = 8;
 	public final static int IT_KEY = 16;
 	public final static int IT_POWERUP = 32;
+	//ZOID-CTF
+	public final static int IT_TECH = 64;
+	//ZOID-CTF
 
 	//	gitem_t->weapmodel for weapons indicates model index
 	public final static int WEAP_BLASTER = 1;

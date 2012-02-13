@@ -35,6 +35,20 @@ public class client_respawn_t
 	/** frags, etc. */
 	protected int score; 
 	
+	//ZOID-CTF
+	protected int ctf_team;
+	protected int ctf_state;
+	protected float ctf_lasthurtcarrier;
+	protected float ctf_lastreturnedflag;
+	protected float ctf_flagsince;
+	protected float ctf_lastfraggedcarrier;
+	protected boolean id_state;
+	protected boolean voted; // for elections
+	protected boolean ready;
+	protected boolean admin;
+	protected ghost_s ghost; // for ghost codes
+	//ZOID-CTF
+	
 	/** angles sent over in the last command. */
 	protected float cmd_angles[] = { 0, 0, 0 };
 	 

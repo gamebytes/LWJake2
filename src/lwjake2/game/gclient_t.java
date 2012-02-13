@@ -42,6 +42,10 @@ public class gclient_t
 	public pmove_state_t old_pmove = new pmove_state_t(); // for detecting out-of-pmove changes
 
 	public boolean showscores; // set layout stat
+	//ZOID-CTF
+	public boolean inmenu;
+	public pmenuhnd_t menu;
+	//ZOID-CTF
 	public boolean showinventory; // set layout stat
 	public boolean showhelp;
 	public boolean showhelpicon;
@@ -110,6 +114,18 @@ public class gclient_t
 
 	public float respawn_time; // can respawn when time > this
 
+	//ZOID-CTF
+	public edict_t grapple;
+	public int ctf_grapplestate;
+	public float ctf_grapplereleasetime;
+	public float ctf_regentime;
+	public float ctf_techsndtime;
+	public float ctf_lasttechmsg;
+	public float menutime;
+	public boolean menudirty;
+	//ZOID-CTF
+	
+	
 	public edict_t chase_target; // player we are chasing
 	public boolean update_chase; // need to update chase info?
 
