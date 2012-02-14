@@ -38,7 +38,10 @@ package lwjake2.game;
 
 import lwjake2.Defines;
 import lwjake2.Globals;
+import lwjake2.qcommon.Com;
+import lwjake2.util.Lib;
 import lwjake2.util.Math3D;
+import lwjake2.util.Vargs;
 
 public class CTF {
 	public static final String CTF_VERSION = "1.09b";
@@ -54,7 +57,7 @@ public class CTF {
 	public static final int STAT_CTF_TECH = 26;
 	public static final int STAT_CTF_ID_VIEW = 27;
 	public static final int STAT_CTF_MATCH = 28;
-	public static final int CONFIG_CTF_MATH = Defines.CS_MAXCLIENTS - 1;
+	public static final int CONFIG_CTF_MATCH = Defines.CS_MAXCLIENTS - 1;
 	
 	public static final int CTF_NOTEAM = 0;
 	public static final int CTF_TEAM1 = 1;
@@ -424,7 +427,7 @@ public class CTF {
 				ent.client.pers.netname + "\\" + s);
 			break;
 		}
-		// gi.cprintf(ent, PRINT_HIGH, "You have been assigned to %s team.\n", ent->client->pers.netname);
+		// gi.cprintf(ent, PRINT_HIGH, "You have been assigned to %s team.\n", ent.client.pers.netname);
 	}
 	
 	public static void CTFAssignTeam(gclient_t who) {
@@ -710,19 +713,738 @@ public class CTF {
 	}
 	
 	/*------------------------------------------------------------------------*/
+
+	public static void CTFResetFlag(int ctf_team) {
+		String c;
+		EdictIterator ent;
+
+		switch (ctf_team) {
+		case CTF_TEAM1:
+			c = "item_flag_team1";
+			break;
+		case CTF_TEAM2:
+			c = "item_flag_team2";
+			break;
+		default:
+			return;
+		}
+
+		ent = null;
+		while ((ent = GameBase.G_Find(ent, GameBase.findByClass, c)) != null) {
+			if ((ent.o.spawnflags & Defines.DROPPED_ITEM) != 0)
+				GameUtil.G_FreeEdict(ent.o);
+			else {
+				ent.o.svflags &= ~Defines.SVF_NOCLIENT;
+				ent.o.solid = Defines.SOLID_TRIGGER;
+				GameBase.gi.linkentity(ent.o);
+				ent.o.s.event = Defines.EV_ITEM_RESPAWN;
+			}
+		}
+	}
 	
-	public static boolean CTFPickup_Flag(edict_t ent, edict_t other);
-	public static boolean CTFDrop_Flag(edict_t ent, gitem_t item);
-	public static void CTFEffects(edict_t player);
-	public static void CTFCalcScores();
-	public static void SetCTFStats(edict_t ent);
-	public static void CTFDeadDropFlag(edict_t self);
-	public static void CTFScoreboardMessage (edict_t ent, edict_t killer);
-	public static void CTFTeam_f (edict_t ent);
-	public static void CTFID_f (edict_t ent);
+	public static void CTFResetFlags() {
+		CTFResetFlag(CTF_TEAM1);
+		CTFResetFlag(CTF_TEAM2);
+	}
+	
+	public static boolean CTFPickup_Flag(edict_t ent, edict_t other) {
+		int ctf_team;
+		int i;
+		edict_t player;
+		gitem_t flag_item, enemy_flag_item;
+
+		// figure out what team this flag is
+		if (ent.classname.equals("item_flag_team1"))
+			ctf_team = CTF_TEAM1;
+		else if (ent.classname.equals("item_flag_team2"))
+			ctf_team = CTF_TEAM2;
+		else {
+			GameBase.gi.cprintf(ent, Globals.PRINT_HIGH, "Don't know what team the flag is on.\n");
+			return false;
+		}
+
+		// same team, if the flag at base, check to he has the enemy flag
+		if (ctf_team == CTF_TEAM1) {
+			flag_item = flag1_item;
+			enemy_flag_item = flag2_item;
+		} else {
+			flag_item = flag2_item;
+			enemy_flag_item = flag1_item;
+		}
+
+		if (ctf_team == other.client.resp.ctf_team) {
+
+			if ((ent.spawnflags & Globals.DROPPED_ITEM) == 0) {
+				// the flag is at home base.  if the player has the enemy
+				// flag, he's just won!
+			
+				if (other.client.pers.inventory[GameItems.ITEM_INDEX(enemy_flag_item)] != 0) {
+					GameBase.gi.bprintf(Globals.PRINT_HIGH,
+						other.client.pers.netname + " captured the " +
+						CTFOtherTeamName(ctf_team) + " flag!\n"
+					);
+					other.client.pers.inventory[GameItems.ITEM_INDEX(enemy_flag_item)] = 0;
+
+					ctfgame.last_flag_capture = GameBase.level.time;
+					ctfgame.last_capture_team = ctf_team;
+					if (ctf_team == CTF_TEAM1)
+						ctfgame.team1++;
+					else
+						ctfgame.team2++;
+
+					GameBase.gi.sound (ent,
+						Globals.CHAN_RELIABLE + Globals.CHAN_NO_PHS_ADD + Globals.CHAN_VOICE,
+						GameBase.gi.soundindex("ctf/flagcap.wav"), 1, Globals.ATTN_NONE, 0
+					);
+
+					// other gets another 10 frag bonus
+					other.client.resp.score += CTF_CAPTURE_BONUS;
+					if (other.client.resp.ghost != null)
+						other.client.resp.ghost.caps++;
+
+					// Ok, let's do the player loop, hand out the bonuses
+					for (i = 1; i <= GameBase.maxclients.value; i++) {
+						player = GameBase.g_edicts[i];
+						if (!player.inuse)
+							continue;
+
+						if (player.client.resp.ctf_team != other.client.resp.ctf_team)
+							player.client.resp.ctf_lasthurtcarrier = -5;
+						else if (player.client.resp.ctf_team == other.client.resp.ctf_team) {
+							if (player != other)
+								player.client.resp.score += CTF_TEAM_BONUS;
+							// award extra points for capture assists
+							if (player.client.resp.ctf_lastreturnedflag + CTF_RETURN_FLAG_ASSIST_TIMEOUT > GameBase.level.time) {
+								GameBase.gi.bprintf(Globals.PRINT_HIGH,
+									player.client.pers.netname + " gets an assist for returning the flag!\n");
+								player.client.resp.score += CTF_RETURN_FLAG_ASSIST_BONUS;
+							}
+							if (player.client.resp.ctf_lastfraggedcarrier + CTF_FRAG_CARRIER_ASSIST_TIMEOUT > GameBase.level.time) {
+								GameBase.gi.bprintf(Globals.PRINT_HIGH,
+									player.client.pers.netname + " gets an assist for fragging the flag carrier!\n");
+								player.client.resp.score += CTF_FRAG_CARRIER_ASSIST_BONUS;
+							}
+						}
+					}
+
+					CTFResetFlags();
+					return false;
+				}
+				return false; // its at home base already
+			}	
+			// hey, its not home.  return it by teleporting it back
+			GameBase.gi.bprintf(Globals.PRINT_HIGH,
+				other.client.pers.netname + " returned the " +
+				CTFTeamName(ctf_team) + " flag!\n"
+			);
+			other.client.resp.score += CTF_RECOVERY_BONUS;
+			other.client.resp.ctf_lastreturnedflag = GameBase.level.time;
+			GameBase.gi.sound (ent,
+				Globals.CHAN_RELIABLE + Globals.CHAN_NO_PHS_ADD + Globals.CHAN_VOICE,
+				GameBase.gi.soundindex("ctf/flagret.wav"), 1, Globals.ATTN_NONE, 0
+			);
+			//CTFResetFlag will remove this entity!  We must return false
+			CTFResetFlag(ctf_team);
+			return false;
+		}
+
+		// hey, its not our flag, pick it up
+		GameBase.gi.bprintf(Globals.PRINT_HIGH,
+			other.client.pers.netname + " got the " +
+			CTFTeamName(ctf_team) + " flag!\n"
+		);
+		other.client.resp.score += CTF_FLAG_BONUS;
+
+		other.client.pers.inventory[GameItems.ITEM_INDEX(flag_item)] = 1;
+		other.client.resp.ctf_flagsince = GameBase.level.time;
+
+		// pick up the flag
+		// if it's not a dropped flag, we just make is disappear
+		// if it's dropped, it will be removed by the pickup caller
+		if ((ent.spawnflags & Defines.DROPPED_ITEM) == 0) {
+			ent.flags |= Defines.FL_RESPAWN;
+			ent.svflags |= Defines.SVF_NOCLIENT;
+			ent.solid = Defines.SOLID_NOT;
+		}
+		return true;
+	}
+	
+	public static EntTouchAdapter CTFDropFlagTouch = new EntTouchAdapter() {
+		public String getID() { return "CTFDropFlagTouch"; };
+		public void touch(edict_t ent, edict_t other, cplane_t plane, csurface_t surf) {
+			//owner (who dropped us) can't touch for two secs
+			if (other == ent.owner && 
+				ent.nextthink - GameBase.level.time > CTF_AUTO_FLAG_RETURN_TIMEOUT-2)
+				return;
+	
+			GameItems.Touch_Item (ent, other, plane, surf);
+		}
+	};
+	
+	public static EntThinkAdapter CTFDropFlagThink = new EntThinkAdapter() {
+		public String getID() { return "CTFDropFlagThink"; };
+		public boolean think(edict_t ent) {
+			// auto return the flag
+			// reset flag will remove ourselves
+			if (ent.classname.equals("item_flag_team1")) {
+				CTFResetFlag(CTF_TEAM1);
+				GameBase.gi.bprintf(Globals.PRINT_HIGH,
+					"The " + CTFTeamName(CTF_TEAM1) + " flag has returned!\n"
+				);
+			} else if (ent.classname.equals("item_flag_team2")) {
+				CTFResetFlag(CTF_TEAM2);
+				GameBase.gi.bprintf(Globals.PRINT_HIGH,
+					"The " + CTFTeamName(CTF_TEAM2) + " flag has returned!\n"
+				);
+			}
+			return true;
+		}
+	};
+	
+	// Called from PlayerDie, to drop the flag from a dying player
+	public static void CTFDeadDropFlag(edict_t self) {
+		edict_t dropped = null;
+
+		if (self.client.pers.inventory[GameItems.ITEM_INDEX(flag1_item)] != 0) {
+			dropped = GameItems.Drop_Item(self, flag1_item);
+			self.client.pers.inventory[GameItems.ITEM_INDEX(flag1_item)] = 0;
+			GameBase.gi.bprintf(Globals.PRINT_HIGH,
+				self.client.pers.netname + " lost the " +
+				CTFTeamName(CTF_TEAM1) + " flag!\n"
+			);
+		} else if (self.client.pers.inventory[GameItems.ITEM_INDEX(flag2_item)] != 0) {
+			dropped = GameItems.Drop_Item(self, flag2_item);
+			self.client.pers.inventory[GameItems.ITEM_INDEX(flag2_item)] = 0;
+			GameBase.gi.bprintf(Globals.PRINT_HIGH,
+				self.client.pers.netname + " lost the " +
+				CTFTeamName(CTF_TEAM2) + " flag!\n"
+			);
+		}
+
+		if (dropped != null) {
+			dropped.think = CTFDropFlagThink;
+			dropped.nextthink = GameBase.level.time + CTF_AUTO_FLAG_RETURN_TIMEOUT;
+			dropped.touch = CTFDropFlagTouch;
+		}
+	}
+	
+	public static boolean CTFDrop_Flag(edict_t ent, gitem_t item) {
+		if (((int) (Math.random() * 32768) & 1) != 0) 
+			GameBase.gi.cprintf(ent, Globals.PRINT_HIGH, "Only lusers drop flags.\n");
+		else
+			GameBase.gi.cprintf(ent, Globals.PRINT_HIGH, "Winners don't drop flags.\n");
+		return false;
+	}
+	
+	public static EntThinkAdapter CTFFlagThink = new EntThinkAdapter() {
+		public String getID() { return "CTFFlagThink"; }
+		public boolean think(edict_t ent) {
+			if (ent.solid != Globals.SOLID_NOT)
+				ent.s.frame = 173 + (((ent.s.frame - 173) + 1) % 16);
+			ent.nextthink = GameBase.level.time + Globals.FRAMETIME;
+			return true;
+		}
+	};
+
+	public static void CTFFlagSetup (edict_t ent) {
+		trace_t tr;
+		float[] dest = null;
+		float[] v;
+
+		v = new float[] {-15, -15, -15};
+		Math3D.VectorCopy (v, ent.mins);
+		v = new float[] {15, 15, 15};
+		Math3D.VectorCopy (v, ent.maxs);
+
+		if (ent.model != null)
+			GameBase.gi.setmodel (ent, ent.model);
+		else
+			GameBase.gi.setmodel (ent, ent.item.world_model);
+		ent.solid = Defines.SOLID_TRIGGER;
+		ent.movetype = Defines.MOVETYPE_TOSS;  
+		ent.touch = GameItems.Touch_Item;
+
+		v = new float[] {0, 0, -128};
+		Math3D.VectorAdd(ent.s.origin, v, dest);
+
+		tr = GameBase.gi.trace (ent.s.origin, ent.mins, ent.maxs, dest, ent, Globals.MASK_SOLID);
+		if (tr.startsolid)
+		{
+			GameBase.gi.dprintf ("CTFFlagSetup: " +
+					ent.classname + " startsolid at " + 
+					ent.s.origin[0] + ',' + ent.s.origin[1] + ',' + ent.s.origin[2] + "\n"
+			);
+			GameUtil.G_FreeEdict(ent);
+			return;
+		}
+
+		Math3D.VectorCopy(tr.endpos, ent.s.origin);
+
+		GameBase.gi.linkentity (ent);
+
+		ent.nextthink = GameBase.level.time + Globals.FRAMETIME;
+		ent.think = CTFFlagThink;
+	}
+	
+	public static void CTFEffects(edict_t player) {
+		player.s.effects &= ~(Defines.EF_FLAG1 | Defines.EF_FLAG2);
+		if (player.health > 0) {
+			if (player.client.pers.inventory[GameItems.ITEM_INDEX(flag1_item)] != 0) {
+				player.s.effects |= Defines.EF_FLAG1;
+			}
+			if (player.client.pers.inventory[GameItems.ITEM_INDEX(flag2_item)] != 0) {
+				player.s.effects |= Defines.EF_FLAG2;
+			}
+		}
+
+		if (player.client.pers.inventory[GameItems.ITEM_INDEX(flag1_item)] != 0)
+			player.s.modelindex3 = GameBase.gi.modelindex("players/male/flag1.md2");
+		else if (player.client.pers.inventory[GameItems.ITEM_INDEX(flag2_item)] != 0)
+			player.s.modelindex3 = GameBase.gi.modelindex("players/male/flag2.md2");
+		else
+			player.s.modelindex3 = 0;
+	}
+	
+	// called when we enter the intermission
+	public static void CTFCalcScores() {
+		int i;
+
+		ctfgame.total1 = ctfgame.total2 = 0;
+		for (i = 0; i < GameBase.maxclients.value; i++) {
+			if (!GameBase.g_edicts[i+1].inuse)
+				continue;
+			if (GameBase.game.clients[i].resp.ctf_team == CTF_TEAM1)
+				ctfgame.total1 += GameBase.game.clients[i].resp.score;
+			else if (GameBase.game.clients[i].resp.ctf_team == CTF_TEAM2)
+				ctfgame.total2 += GameBase.game.clients[i].resp.score;
+		}
+	}
+	
+	public static void CTFID_f (edict_t ent) {
+		if (ent.client.resp.id_state) {
+			GameBase.gi.cprintf(ent, Globals.PRINT_HIGH, "Disabling player identication display.\n");
+			ent.client.resp.id_state = false;
+		} else {
+			GameBase.gi.cprintf(ent, Globals.PRINT_HIGH, "Activating player identication display.\n");
+			ent.client.resp.id_state = true;
+		}
+	}
+	
+	public static void CTFSetIDView(edict_t ent) {
+		float[] forward = null, dir = null;
+		trace_t	tr;
+		edict_t	who, best;
+		float	bd = 0, d;
+		int i;
+
+		ent.client.ps.stats[STAT_CTF_ID_VIEW] = 0;
+
+		Math3D.AngleVectors(ent.client.v_angle, forward, null, null);
+		Math3D.VectorScale(forward, 1024, forward);
+		Math3D.VectorAdd(ent.s.origin, forward, forward);
+		tr = GameBase.gi.trace(ent.s.origin, null, null, forward, ent, Globals.MASK_SOLID);
+		if (tr.fraction < 1 && tr.ent != null && tr.ent.client != null) {
+			ent.client.ps.stats[STAT_CTF_ID_VIEW] = 
+				(short) (Globals.CS_PLAYERSKINS + (ent.index));
+			return;
+		}
+
+		Math3D.AngleVectors(ent.client.v_angle, forward, null, null);
+		best = null;
+		for (i = 1; i <= GameBase.maxclients.value; i++) {
+			who = GameBase.g_edicts[i];
+			if (!who.inuse || who.solid == Globals.SOLID_NOT)
+				continue;
+			Math3D.VectorSubtract(who.s.origin, ent.s.origin, dir);
+			Math3D.VectorNormalize(dir);
+			d = Math3D.DotProduct(forward, dir);
+			if (d > bd && loc_CanSee(ent, who)) {
+				bd = d;
+				best = who;
+			}
+		}
+		if (bd > 0.90)
+			ent.client.ps.stats[STAT_CTF_ID_VIEW] = 
+				(short) (Globals.CS_PLAYERSKINS + (best.index));
+	}
+	
+	public static void SetCTFStats(edict_t ent) {
+		gitem_t tech;
+		int i;
+		int p1, p2;
+		EdictIterator e;
+
+		if (ctfgame.match > MATCH_NONE)
+			ent.client.ps.stats[STAT_CTF_MATCH] = CONFIG_CTF_MATCH;
+		else
+			ent.client.ps.stats[STAT_CTF_MATCH] = 0;
+
+		//ghosting
+		if (ent.client.resp.ghost != null) {
+			ent.client.resp.ghost.score = ent.client.resp.score;
+			ent.client.resp.ghost.netname = ent.client.pers.netname;
+			ent.client.resp.ghost.number = ent.s.number;
+		}
+
+		// logo headers for the frag display
+		ent.client.ps.stats[STAT_CTF_TEAM1_HEADER] = (short) GameBase.gi.imageindex ("ctfsb1");
+		ent.client.ps.stats[STAT_CTF_TEAM2_HEADER] = (short) GameBase.gi.imageindex ("ctfsb2");
+
+		// if during intermission, we must blink the team header of the winning team
+		if (GameBase.level.intermissiontime != 0.0f && (GameBase.level.framenum & 8) != 0) { // blink 1/8th second
+			// note that ctfgame.total[12] is set when we go to intermission
+			if (ctfgame.team1 > ctfgame.team2)
+				ent.client.ps.stats[STAT_CTF_TEAM1_HEADER] = 0;
+			else if (ctfgame.team2 > ctfgame.team1)
+				ent.client.ps.stats[STAT_CTF_TEAM2_HEADER] = 0;
+			else if (ctfgame.total1 > ctfgame.total2) // frag tie breaker
+				ent.client.ps.stats[STAT_CTF_TEAM1_HEADER] = 0;
+			else if (ctfgame.total2 > ctfgame.total1) 
+				ent.client.ps.stats[STAT_CTF_TEAM2_HEADER] = 0;
+			else { // tie game!
+				ent.client.ps.stats[STAT_CTF_TEAM1_HEADER] = 0;
+				ent.client.ps.stats[STAT_CTF_TEAM2_HEADER] = 0;
+			}
+		}
+
+		// tech icon
+		i = 0;
+		ent.client.ps.stats[STAT_CTF_TECH] = 0;
+		while (tnames[i] != null) {
+			if ((tech = GameItems.FindItemByClassname(tnames[i])) != null &&
+				ent.client.pers.inventory[GameItems.ITEM_INDEX(tech)] != 0) {
+				ent.client.ps.stats[STAT_CTF_TECH] = (short) GameBase.gi.imageindex(tech.icon);
+				break;
+			}
+			i++;
+		}
+
+		// figure out what icon to display for team logos
+		// three states:
+		//   flag at base
+		//   flag taken
+		//   flag dropped
+		p1 = GameBase.gi.imageindex ("i_ctf1");
+		e = GameBase.G_Find(null, GameBase.findByClass, "item_flag_team1");
+		if (e != null) {
+			if (e.o.solid == Globals.SOLID_NOT) {
+				int x;
+
+				// not at base
+				// check if on player
+				p1 = GameBase.gi.imageindex ("i_ctf1d"); // default to dropped
+				for (x = 1; x <= GameBase.maxclients.value; x++)
+					if (GameBase.g_edicts[x].inuse &&
+						GameBase.g_edicts[x].client.pers.inventory[GameItems.ITEM_INDEX(flag1_item)] != 0) {
+						// enemy has it
+						p1 = GameBase.gi.imageindex ("i_ctf1t");
+						break;
+					}
+			} else if ((e.o.spawnflags & Globals.DROPPED_ITEM) != 0)
+				p1 = GameBase.gi.imageindex ("i_ctf1d"); // must be dropped
+		}
+		p2 = GameBase.gi.imageindex ("i_ctf2");
+		e = GameBase.G_Find(null, GameBase.findByClass, "item_flag_team2");
+		if (e != null) {
+			if (e.o.solid == Globals.SOLID_NOT) {
+				int x;
+
+				// not at base
+				// check if on player
+				p2 = GameBase.gi.imageindex ("i_ctf2d"); // default to dropped
+				for (x = 1; i <= GameBase.maxclients.value; x++)
+					if (GameBase.g_edicts[x].inuse &&
+						GameBase.g_edicts[x].client.pers.inventory[GameItems.ITEM_INDEX(flag2_item)] != 0) {
+						// enemy has it
+						p2 = GameBase.gi.imageindex ("i_ctf2t");
+						break;
+					}
+			} else if ((e.o.spawnflags & Globals.DROPPED_ITEM) != 0)
+				p2 = GameBase.gi.imageindex ("i_ctf2d"); // must be dropped
+		}
+
+
+		ent.client.ps.stats[STAT_CTF_TEAM1_PIC] = (short) p1;
+		ent.client.ps.stats[STAT_CTF_TEAM2_PIC] = (short) p2;
+
+		if (ctfgame.last_flag_capture >= 0.0f && GameBase.level.time - ctfgame.last_flag_capture < 5) {
+			if (ctfgame.last_capture_team == CTF_TEAM1)
+				if ((GameBase.level.framenum & 8) != 0)
+					ent.client.ps.stats[STAT_CTF_TEAM1_PIC] = (short) p1;
+				else
+					ent.client.ps.stats[STAT_CTF_TEAM1_PIC] = 0;
+			else
+				if ((GameBase.level.framenum & 8) != 0)
+					ent.client.ps.stats[STAT_CTF_TEAM2_PIC] = (short) p2;
+				else
+					ent.client.ps.stats[STAT_CTF_TEAM2_PIC] = 0;
+		}
+
+		ent.client.ps.stats[STAT_CTF_TEAM1_CAPS] = (short) ctfgame.team1;
+		ent.client.ps.stats[STAT_CTF_TEAM2_CAPS] = (short) ctfgame.team2;
+
+		ent.client.ps.stats[STAT_CTF_FLAG_PIC] = 0;
+		if (ent.client.resp.ctf_team == CTF_TEAM1 &&
+			ent.client.pers.inventory[GameItems.ITEM_INDEX(flag2_item)] != 0 &&
+			((GameBase.level.framenum & 8) != 0))
+			ent.client.ps.stats[STAT_CTF_FLAG_PIC] = (short) GameBase.gi.imageindex ("i_ctf2");
+
+		else if (ent.client.resp.ctf_team == CTF_TEAM2 &&
+			ent.client.pers.inventory[GameItems.ITEM_INDEX(flag1_item)] != 0&&
+			((GameBase.level.framenum & 8) != 0))
+			ent.client.ps.stats[STAT_CTF_FLAG_PIC] = (short) GameBase.gi.imageindex ("i_ctf1");
+
+		ent.client.ps.stats[STAT_CTF_JOINED_TEAM1_PIC] = 0;
+		ent.client.ps.stats[STAT_CTF_JOINED_TEAM2_PIC] = 0;
+		if (ent.client.resp.ctf_team == CTF_TEAM1)
+			ent.client.ps.stats[STAT_CTF_JOINED_TEAM1_PIC] = (short) GameBase.gi.imageindex ("i_ctfj");
+		else if (ent.client.resp.ctf_team == CTF_TEAM2)
+			ent.client.ps.stats[STAT_CTF_JOINED_TEAM2_PIC] = (short) GameBase.gi.imageindex ("i_ctfj");
+
+		ent.client.ps.stats[STAT_CTF_ID_VIEW] = 0;
+		if (ent.client.resp.id_state)
+			CTFSetIDView(ent);
+	}
+	
+	/*
+	==================
+	CTFScoreboardMessage
+	==================
+	*/
+	public static void CTFScoreboardMessage (edict_t ent, edict_t killer) {
+		StringBuilder entry = new StringBuilder();
+		StringBuilder string = new StringBuilder();
+		int i, j, k; //, n;
+		int sorted[][] = new int[2][Globals.MAX_CLIENTS];
+		int sortedscores[][] = new int[2][Globals.MAX_CLIENTS];
+		int score;
+		int total[] = new int[2];
+		int totalscore[] = new int [2];
+		int last[] = new int[2];
+		gclient_t cl;
+		edict_t cl_ent;
+		int team;
+		// int maxsize = 1000;
+
+		// sort the clients by team and score
+		total[0] = total[1] = 0;
+		last[0] = last[1] = 0;
+		totalscore[0] = totalscore[1] = 0;
+		for (i=0 ; i<GameBase.game.maxclients ; i++) {
+			cl_ent = GameBase.g_edicts[1 + i];
+			if (!cl_ent.inuse)
+				continue;
+			if (GameBase.game.clients[i].resp.ctf_team == CTF_TEAM1)
+				team = 0;
+			else if (GameBase.game.clients[i].resp.ctf_team == CTF_TEAM2)
+				team = 1;
+			else
+				continue; // unknown team?
+
+			score = GameBase.game.clients[i].resp.score;
+			for (j=0 ; j<total[team] ; j++)
+			{
+				if (score > sortedscores[team][j])
+					break;
+			}
+			for (k=total[team] ; k>j ; k--)
+			{
+				sorted[team][k] = sorted[team][k-1];
+				sortedscores[team][k] = sortedscores[team][k-1];
+			}
+			sorted[team][j] = i;
+			sortedscores[team][j] = score;
+			totalscore[team] += score;
+			total[team]++;
+		}
+
+		// print level name and exit rules
+		// add the clients in sorted order
+
+		// team one
+		string.append(Com.sprintf("if 24 xv 8 yv 8 pic 24 endif " +
+			"xv 40 yv 28 string \"%4d/%-3d\" " +
+			"xv 98 yv 12 num 2 18 " +
+			"if 25 xv 168 yv 8 pic 25 endif " +
+			"xv 200 yv 28 string \"%4d/%-3d\" " +
+			"xv 256 yv 12 num 2 20 ",
+			new Vargs().add(totalscore[0]).add(total[0])
+				.add(totalscore[1]).add(total[1]))
+		);
+
+		for (i=0 ; i<16 ; i++)
+		{
+			if (i >= total[0] && i >= total[1])
+				break; // we're done
+
+			// left side
+			if (i < total[0]) {
+				cl = GameBase.game.clients[sorted[0][i]];
+				cl_ent = GameBase.g_edicts[1 + sorted[0][i]];
+
+				entry.append(Com.sprintf(
+					"ctf 0 %d %d %d %d ",
+					new Vargs().add(42 + i * 8)
+					.add(sorted[0][i])
+					.add(cl.resp.score)
+					.add(cl.ping > 999 ? 999 : cl.ping))
+				);
+
+				if (cl_ent.client.pers.inventory[GameItems.ITEM_INDEX(flag2_item)] != 0)
+					entry.append(Com.sprintf("xv 56 yv %d picn sbfctf2 ",
+						new Vargs(42 + i * 8))
+					);
+
+				string.append(entry.toString());
+			}
+
+			// right side
+			if (i < total[1]) {
+				cl = GameBase.game.clients[sorted[1][i]];
+				cl_ent = GameBase.g_edicts[1 + sorted[1][i]];
+
+				entry.append(Com.sprintf(
+					"ctf 160 %d %d %d %d ",
+					new Vargs().add(42 + i * 8)
+					.add(sorted[1][i])
+					.add(cl.resp.score)
+					.add(cl.ping > 999 ? 999 : cl.ping))
+				);
+				if (cl_ent.client.pers.inventory[GameItems.ITEM_INDEX(flag1_item)] != 0)
+					entry.append(Com.sprintf("xv 216 yv %d picn sbfctf1 ",
+						new Vargs(42 + i * 8))
+					);
+				string.append(entry.toString());
+			}
+		}
+
+		/* Nah, we don't need no spectators. - flibit
+		// put in spectators if we have enough room
+		if (last[0] > last[1])
+			j = last[0];
+		else
+			j = last[1];
+		j = (j + 2) * 8 + 42;
+
+		k = n = 0;
+		if (maxsize - len > 50) {
+			for (i = 0; i < GameBase.maxclients.value; i++) {
+				cl_ent = GameBase.g_edicts + 1 + i;
+				cl = &game.clients[i];
+				if (!cl_ent.inuse ||
+					cl_ent.solid != SOLID_NOT ||
+					cl_ent.client.resp.ctf_team != CTF_NOTEAM)
+					continue;
+
+				if (!k) {
+					k = 1;
+					sprintf(entry, "xv 0 yv %d string2 \"Spectators\" ", j);
+					strcat(string, entry);
+					len = strlen(string);
+					j += 8;
+				}
+
+				sprintf(entry+strlen(entry),
+					"ctf %d %d %d %d %d ",
+					(n & 1) ? 160 : 0, // x
+					j, // y
+					i, // playernum
+					cl.resp.score,
+					cl.ping > 999 ? 999 : cl.ping);
+				if (maxsize - len > strlen(entry)) {
+					strcat(string, entry);
+					len = strlen(string);
+				}
+				
+				if (n & 1)
+					j += 8;
+				n++;
+			}
+		}
+
+		if (total[0] - last[0] > 1) // couldn't fit everyone
+			sprintf(string + strlen(string), "xv 8 yv %d string \"..and %d more\" ",
+				42 + (last[0]+1)*8, total[0] - last[0] - 1);
+		if (total[1] - last[1] > 1) // couldn't fit everyone
+			sprintf(string + strlen(string), "xv 168 yv %d string \"..and %d more\" ",
+				42 + (last[1]+1)*8, total[1] - last[1] - 1);
+		*/
+
+		GameBase.gi.WriteByte(Defines.svc_layout);
+		GameBase.gi.WriteString(string.toString());
+	}
+	
+	public static void CTFTeam_f (edict_t ent) {
+		String t, s;
+		int desired_team;
+
+		t = GameBase.gi.args();
+		if (t == null) {
+			GameBase.gi.cprintf(ent, Globals.PRINT_HIGH,
+				"You are on the " + CTFTeamName(ent.client.resp.ctf_team) + " team.\n"
+			);
+			return;
+		}
+
+		if (ctfgame.match > MATCH_SETUP) {
+			GameBase.gi.cprintf(ent, Globals.PRINT_HIGH, "Can't change teams in a match.\n");
+			return;
+		}
+
+		if (Lib.Q_stricmp(t, "red") == 0)
+			desired_team = CTF_TEAM1;
+		else if (Lib.Q_stricmp(t, "blue") == 0)
+			desired_team = CTF_TEAM2;
+		else {
+			GameBase.gi.cprintf(ent, Globals.PRINT_HIGH,
+				"Unknown team " + t + ".\n");
+			return;
+		}
+
+		if (ent.client.resp.ctf_team == desired_team) {
+			GameBase.gi.cprintf(ent, Globals.PRINT_HIGH,
+				"You are already on the " + CTFTeamName(ent.client.resp.ctf_team) + " team.\n"
+			);
+			return;
+		}
+
+		ent.svflags = 0;
+		ent.flags &= ~Globals.FL_GODMODE;
+		ent.client.resp.ctf_team = desired_team;
+		ent.client.resp.ctf_state = 0;
+		s = Info.Info_ValueForKey (ent.client.pers.userinfo, "skin");
+		CTFAssignSkin(ent, s);
+
+		if (ent.solid == Globals.SOLID_NOT) { // spectator
+			PlayerClient.PutClientInServer (ent);
+			// add a teleportation effect
+			ent.s.event = Globals.EV_PLAYER_TELEPORT;
+			// hold in place briefly
+			ent.client.ps.pmove.pm_flags = pmove_t.PMF_TIME_TELEPORT;
+			ent.client.ps.pmove.pm_time = 14;
+			GameBase.gi.bprintf(Globals.PRINT_HIGH,
+				ent.client.pers.netname + " joined the " +
+				CTFTeamName(desired_team) + " team.\n"
+			);
+			return;
+		}
+
+		ent.health = 0;
+		PlayerClient.player_die.die(ent, ent, ent, 100000, Globals.vec3_origin);
+		// don't even bother waiting for death frames
+		ent.deadflag = Globals.DEAD_DEAD;
+		PlayerClient.respawn (ent);
+
+		ent.client.resp.score = 0;
+
+		GameBase.gi.bprintf(Globals.PRINT_HIGH,
+			ent.client.pers.netname + " changed to the " +
+			CTFTeamName(desired_team) + " team.\n"
+		);
+	}
+	
+	// SAY TEAM
 	public static void CTFSay_Team(edict_t who, String msg);
-	public static void CTFFlagSetup (edict_t ent);
-	public static void CTFResetFlag(int ctf_team);
 
 	// GRAPPLE
 	public static void CTFWeapon_Grapple (edict_t ent);

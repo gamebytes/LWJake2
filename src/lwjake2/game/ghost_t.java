@@ -19,7 +19,7 @@
 package lwjake2.game;
 
 public class ghost_t {
-	public char netname[] = new char[16];
+	public String netname;
 	int number;
 
 	// stats
