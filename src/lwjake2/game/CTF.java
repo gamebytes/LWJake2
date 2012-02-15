@@ -1443,7 +1443,52 @@ public class CTF {
 		);
 	}
 	
-	// SAY TEAM
+	/*
+	======================================================================
+
+	SAY_TEAM
+
+	======================================================================
+	*/
+
+	// This array is in 'importance order', it indicates what items are
+	// more important when reporting their names.
+	private static class loc_name {
+		public loc_name(String name, int rank) {
+			classname = name;
+			priority = rank;
+		}
+		public String classname;
+		public int priority;
+	}
+	public static loc_name loc_names[] = new loc_name[] {
+		new loc_name("item_flag_team1", 1),
+		new loc_name("item_flag_team2", 1),
+		new loc_name("item_quad", 2), 
+		new loc_name("item_invulnerability", 2),
+		new loc_name("weapon_bfg", 3),
+		new loc_name("weapon_railgun", 4),
+		new loc_name("weapon_rocketlauncher", 4),
+		new loc_name("weapon_hyperblaster", 4),
+		new loc_name("weapon_chaingun", 4),
+		new loc_name("weapon_grenadelauncher", 4),
+		new loc_name("weapon_machinegun", 4),
+		new loc_name("weapon_supershotgun", 4),
+		new loc_name("weapon_shotgun", 4),
+		new loc_name("item_power_screen", 5),
+		new loc_name("item_power_shield", 5),
+		new loc_name("item_armor_body", 6),
+		new loc_name("item_armor_combat", 6),
+		new loc_name("item_armor_jacket", 6),
+		new loc_name("item_silencer", 7),
+		new loc_name("item_breather", 7),
+		new loc_name("item_enviro", 7),
+		new loc_name("item_adrenaline", 7),
+		new loc_name("item_bandolier", 8),
+		new loc_name("item_pack", 8),
+		new loc_name(null, 0)
+	};
+	
 	public static void CTFSay_Team(edict_t who, String msg);
 
 	// GRAPPLE
