@@ -62,11 +62,12 @@
 			</fileset>
 		</copy>
 
-		<!-- Copy licenses folder and README -->
+		<!-- Copy licenses folder and README files -->
 		<copy todir="built/Linux/licenses">
 			<fileset dir="licenses"/>
 		</copy>
 		<copy file="README" todir="built/Linux"/>
+		<copy file="readme.id" todir="built/Linux"/>
 
 		<!-- Copy GNU/Linux executable file -->
 		<copy file="executables/LWJake2.sh" todir="built/Linux"/>
@@ -98,11 +99,12 @@
 			</fileset>
 		</copy>
 
-		<!-- Copy licenses folder and README -->
+		<!-- Copy licenses folder and README files -->
 		<copy todir="built/OSX/licenses">
 			<fileset dir="licenses"/>
 		</copy>
 		<copy file="README" todir="built/OSX"/>
+		<copy file="readme.id" todir="built/OSX"/>
 
 		<!-- Copy OSX executable file -->
 		<copy file="executables/LWJake2.sh" todir="built/OSX"/>
@@ -132,11 +134,12 @@
 			</fileset>
 		</copy>
 
-		<!-- Copy licenses folder and README -->
+		<!-- Copy licenses folder and README files -->
 		<copy todir="built/Windows/licenses">
 			<fileset dir="licenses"/>
 		</copy>
 		<copy file="README" todir="built/Windows"/>
+		<copy file="readme.id" todir="built/Windows"/>
 
 		<!-- Copy Windows executable file -->
 		<copy file="executables/LWJake2.bat" todir="built/Windows"/>
@@ -159,11 +162,12 @@
 		<!--Copy LWJake2 jar -->
 		<copy file="built/jar/lwjake2.jar" todir="built/Server"/>
 		
-		<!-- Copy licenses folder and README -->
+		<!-- Copy licenses folder and README files -->
 		<copy todir="built/Server/licenses">
 			<fileset dir="licenses"/>
 		</copy>
 		<copy file="README" todir="built/Server"/>
+		<copy file="readme.id" todir="built/Server"/>
 		
 		<!-- Copy executable files -->
 		<copy file="executables/LWJake2_Server.sh" todir="built/Server"/>
@@ -188,6 +192,7 @@
 			<tarfileset dir="." prefix="LWJake2">
 				<include name="build.xml"/>
 				<include name="README"/>
+				<include name="readme.id"/>
 			</tarfileset>
 		</tar>
 		<zip destfile="built/srcdist/LWJake2-src.zip">
@@ -199,6 +204,7 @@
 				<include name="src/**"/>
 				<include name="build.xml"/>
 				<include name="README"/>
+				<include name="readme.id"/>
 			</zipfileset>
 		</zip>
 	</target>
