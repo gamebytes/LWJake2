@@ -155,6 +155,8 @@ public final class LWJGLSoundImpl implements Sound {
 	{
 		Com.Printf("... using EFX effects:\n");
 		underwaterFilter = new EFXFilterLowPass();
+		underwaterFilter.setGain(1.0f);
+		underwaterFilter.setGainHF(0.0f);
 	}
 	
 	
