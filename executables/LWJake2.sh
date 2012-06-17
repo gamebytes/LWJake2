@@ -1,4 +1,17 @@
 #!/bin/bash
+
+# Move to script's directory
 cd `dirname $0`
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./
+
+# Get the kernel information
+UNAME=`uname`
+
+# Set the proper libpath
+if [ "$UNAME" == "Darwin" ]; then
+  export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:./
+elif [ "$UNAME" == "Linux" ]; then
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./
+fi
+
+# Run it!
 java -jar lwjake2.jar $@
