@@ -25,6 +25,7 @@ import lwjake2.game.cvar_t;
 import lwjake2.qcommon.xcommand_t;
 
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 import org.lwjgl.LWJGLException;
@@ -107,37 +108,57 @@ public abstract class LWJGLBase {
 	
 	public DisplayMode[] getLWJGLModeList() {
 		try {
-			DisplayMode[] modes = Display.getAvailableDisplayModes();
+			// Return value storage.
+			ArrayList<DisplayMode> displayModes;
 			
-			LinkedList<DisplayMode> l = new LinkedList<DisplayMode>();
-			l.add(oldDisplayMode);
+			// Get all possible display modes.
+			DisplayMode[] allDisplayModes = Display.getAvailableDisplayModes();
 			
-			for (int i = 0; i < modes.length; i++) {
-				DisplayMode m = modes[i];
-				
-				if (m.getBitsPerPixel() != oldDisplayMode.getBitsPerPixel()) continue;
-				if (m.getFrequency() > oldDisplayMode.getFrequency()) continue;
-				if (m.getHeight() < 240 || m.getWidth() < 320) continue;
-				
-				int j = 0;
-				DisplayMode ml = null;
-				for (j = 0; j < l.size(); j++) {
-					ml = (DisplayMode)l.get(j);
-					if (ml.getWidth() > m.getWidth()) break;
-					if (ml.getWidth() == m.getWidth() && ml.getHeight() >= m.getHeight()) break;
-				}
-				if (j == l.size()) {
-					l.addLast(m);
-				} else if (ml.getWidth() > m.getWidth() || ml.getHeight() > m.getHeight()) {
-					l.add(j, m);
-				} else if (m.getFrequency() > ml.getFrequency()){
-					l.remove(j);
-					l.add(j, m);
-				}
+			// Cut down all the ones with a height below 240.
+			displayModes = new ArrayList<DisplayMode>();
+			for (int x = 0; x < allDisplayModes.length; x++) {
+				if (allDisplayModes[x].getHeight() >= 240)
+					displayModes.add(allDisplayModes[x]);
 			}
-			DisplayMode[] ma = new DisplayMode[l.size()];
-			l.toArray(ma);
-			return ma;
+			
+			// Gnome sort the display modes by height, width, and refresh rate.
+			int currentSpot = 0;
+			boolean needSwap = false;
+			DisplayMode tempStore;
+			while (currentSpot < displayModes.size() - 1) {
+				// Check DisplayMode heights.
+				if (displayModes.get(currentSpot).getHeight() > displayModes.get(currentSpot + 1).getHeight())
+					needSwap = true;
+				else if (displayModes.get(currentSpot).getHeight() == displayModes.get(currentSpot + 1).getHeight()) {
+					// Check DisplayMode widths.
+					if (displayModes.get(currentSpot).getWidth() > displayModes.get(currentSpot + 1).getWidth())
+						needSwap = true;
+					else if (displayModes.get(currentSpot).getWidth() == displayModes.get(currentSpot + 1).getWidth())
+						// Doesn't sort frequencies, but removes the lesser ones entirely.
+						if (displayModes.get(currentSpot).getFrequency() < displayModes.get(currentSpot + 1).getFrequency()) {
+							displayModes.remove(currentSpot);
+							currentSpot--;
+						}
+						else if (displayModes.get(currentSpot).getFrequency() > displayModes.get(currentSpot + 1).getFrequency()) {
+							displayModes.remove(currentSpot + 1);
+							currentSpot--;
+						}
+				}
+				if (needSwap) {
+					needSwap = false;
+					tempStore = displayModes.get(currentSpot);
+					displayModes.set(currentSpot, displayModes.get(currentSpot + 1));
+					displayModes.set(currentSpot + 1, tempStore);
+					if (currentSpot > 0)
+						currentSpot--;
+				}
+				else
+					currentSpot++;
+			}
+			
+			// Return the array.
+			return displayModes.toArray(new DisplayMode[displayModes.size()]);
+			
 		} catch (LWJGLException e) {
 			e.printStackTrace();
 			System.exit(0);
@@ -226,7 +247,7 @@ public abstract class LWJGLBase {
 			Display.setLocation(0,0);
 
 			try {
-				Display.setFullscreen(fullscreen);
+				Display.setFullscreen(true);
 			} 
 			catch (LWJGLException e)
 			{
@@ -238,6 +259,14 @@ public abstract class LWJGLBase {
 		} 
 		else 
 		{
+			try {
+				Display.setFullscreen(false);
+			} 
+			catch (LWJGLException e)
+			{
+				return rserr_invalid_fullscreen; 
+			}
+			
 			try 
 			{
 				Display.setDisplayMode(displayMode);
@@ -246,14 +275,6 @@ public abstract class LWJGLBase {
 			{
 				return rserr_invalid_mode;
 			}
-
-			try {
-				Display.setFullscreen(false);
-			} 
-			catch (LWJGLException e)
-			{
-				return rserr_invalid_fullscreen; 
-			}	
 			Display.setLocation(window_xpos, window_ypos);
 		}
 

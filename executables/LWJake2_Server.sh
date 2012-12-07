@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Move to script's directory
-cd `dirname $0`
+cd "`dirname "$0"`"
 
 # Get the kernel information
 UNAME=`uname`
